@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Until Dawn — Character Sheets</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0e;
+    --panel: #111118;
+    --border: #2a2a3a;
+    --accent: #c8102e;
+    --text: #d4cfc8;
+    --muted: #6a6570;
+    --high: #c8102e;
+    --med: #e8c840;
+    --low: #4a7fa8;
+    --wendigo: #7a3aaa;
+    --wendigo-dim: rgba(122,58,170,0.15);
+    --wendigo-border: rgba(122,58,170,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 16px;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(200,16,46,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(72,100,168,0.05) 0%, transparent 50%);
+  }
+  header {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 2px;
+    background: var(--accent);
+  }
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #fff;
+    text-shadow: 0 0 40px rgba(200,16,46,0.4);
+  }
+  .subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+  }
+  .save-indicator {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-top: 0.8rem;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  .save-indicator.saved { color: #5aaa5a; }
+  .save-indicator.saving { color: var(--med); }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,14,0.97);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+  .tab-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .tab-btn:hover { color: var(--text); border-color: #4a4a5a; }
+  .tab-btn.active { border-color: var(--accent); color: #fff; background: rgba(200,16,46,0.1); text-shadow: 0 0 10px rgba(200,16,46,0.4); }
+  .tab-btn.is-wendigo { border-color: var(--wendigo-border) !important; color: #b07ae0 !important; background: var(--wendigo-dim) !important; text-shadow: 0 0 10px rgba(122,58,170,0.5) !important; }
+
+  .sheet { display: none; max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .sheet.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .human-view, .wendigo-view { }
+  .wendigo-view { display: none; }
+  .sheet.wendigo-mode .human-view { display: none; }
+  .sheet.wendigo-mode .wendigo-view { display: block; }
+
+  .sheet-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .char-name { font-family: 'Cinzel', serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 800; color: #fff; line-height: 1; }
+  .char-role { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase; margin-top: 0.4rem; }
+  .char-role.wendigo-role { color: var(--wendigo); }
+
+  .status-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid #2a5a2a;
+    color: #5aaa5a;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .status-badge.deceased { border-color: #5a2a2a; color: #aa4a4a; }
+  .status-badge.unknown  { border-color: #5a4a2a; color: #aa8a4a; }
+  .status-badge.wendigo  { border-color: var(--wendigo-border); color: #b07ae0; background: var(--wendigo-dim); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .card { background: var(--panel); border: 1px solid var(--border); padding: 1.2rem; position: relative; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent); opacity: 0.6; }
+  .card.wendigo-card { border-color: var(--wendigo-border); background: #120e18; }
+  .card.wendigo-card::before { background: var(--wendigo); }
+  .card-title { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.35em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.8rem; }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-name { font-size: 0.9rem; color: var(--text); }
+  .tier { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.15em; padding: 0.2rem 0.6rem; text-transform: uppercase; }
+  .tier.high { color: var(--high); border: 1px solid rgba(200,16,46,0.4); background: rgba(200,16,46,0.08); }
+  .tier.med  { color: var(--med);  border: 1px solid rgba(232,200,64,0.4); background: rgba(232,200,64,0.08); }
+  .tier.low  { color: var(--low);  border: 1px solid rgba(74,127,168,0.4); background: rgba(74,127,168,0.08); }
+
+  .pip-track { display: flex; gap: 4px; margin-top: 0.6rem; flex-wrap: wrap; }
+  .pip { width: 22px; height: 22px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+  .pip.filled      { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 6px rgba(200,16,46,0.5); }
+  .pip.filled.hunt { background: var(--wendigo); border-color: var(--wendigo); box-shadow: 0 0 6px rgba(122,58,170,0.6); }
+  .pip:hover       { border-color: var(--accent); }
+  .pip.hunt-pip:hover { border-color: var(--wendigo); }
+  .pip-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; }
+
+  .trait-list { list-style: none; }
+  .trait-list li { padding: 0.3rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-style: italic; color: var(--text); font-size: 0.95rem; }
+  .trait-list li:last-child { border-bottom: none; }
+  .trait-list li::before { content: '— '; color: var(--muted); }
+
+  .rel-row { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 0.5rem; }
+  .rel-row:last-child { border-bottom: none; }
+  .rel-name { font-size: 0.9rem; color: var(--text); flex-shrink: 0; }
+  .rel-select {
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.1em;
+    padding: 0.2rem 0.4rem; cursor: pointer; text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s; max-width: 140px;
+  }
+  .rel-select option { background: #1a1a24; }
+  .rel-select:focus { outline: none; border-color: var(--accent); }
+  .rel-select.close     { color: var(--med);  border-color: rgba(232,200,64,0.5); }
+  .rel-select.friendly  { color: #6aaa6a;     border-color: rgba(106,170,106,0.5); }
+  .rel-select.romantic  { color: #d88ab0;     border-color: rgba(216,138,176,0.5); }
+  .rel-select.tense     { color: var(--high); border-color: rgba(200,16,46,0.5); }
+  .rel-select.strained  { color: #aa7a3a;     border-color: rgba(170,122,58,0.5); }
+  .rel-select.rivals    { color: #c06030;     border-color: rgba(192,96,48,0.5); }
+  .rel-select.deceased  { color: var(--muted); }
+  .rel-select.unknown   { color: #7a7a9a;     border-color: rgba(122,122,154,0.5); }
+  .rel-select.hostile   { color: #ff4040;     border-color: rgba(255,64,64,0.5); }
+  .rel-select.estranged { color: #887070;     border-color: rgba(136,112,112,0.5); }
+
+  .inv-item { display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.9rem; gap: 0.5rem; }
+  .inv-item:last-child { border-bottom: none; }
+  .inv-left { display: flex; align-items: center; gap: 0.6rem; }
+  .inv-dot { width: 6px; height: 6px; flex-shrink: 0; transition: background 0.2s; background: var(--accent); }
+  .inv-dot.not-found { background: var(--muted); }
+  .inv-dot.lost      { background: #aa4a4a; }
+  .inv-name { transition: color 0.2s, text-decoration 0.2s; }
+  .inv-name.not-found { color: var(--muted); text-decoration: line-through; }
+  .inv-name.lost      { color: #aa4a4a; text-decoration: line-through; }
+  .inv-toggle { font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.1em; padding: 0.2rem 0.5rem; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; text-transform: uppercase; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+  .inv-toggle:hover { border-color: var(--accent); color: var(--text); }
+  .inv-toggle.found     { border-color: rgba(106,170,106,0.5); color: #6aaa6a; }
+  .inv-toggle.not-found { border-color: var(--border); color: var(--muted); }
+  .inv-toggle.lost      { border-color: rgba(170,74,74,0.5); color: #aa4a4a; }
+  .inv-fixed { font-family: 'Cinzel', serif; font-size: 0.55rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0; }
+
+  .choice-row { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .choice-row:last-child { border-bottom: none; }
+  .choice-label { color: var(--muted); font-size: 0.7rem; font-family: 'Cinzel', serif; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .choice-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-left: 2px solid var(--accent); color: var(--text); font-family: 'Crimson Text', serif; font-size: 0.95rem; font-style: italic; padding: 0.3rem 0.6rem; transition: border-color 0.2s, background 0.2s; }
+  .choice-input:focus { outline: none; border-color: var(--accent); background: rgba(200,16,46,0.05); }
+  .choice-input::placeholder { color: var(--muted); }
+  .choice-input[readonly] { opacity: 0.7; cursor: default; }
+
+  .w-field { padding: 0.5rem 0; border-bottom: 1px solid rgba(122,58,170,0.15); }
+  .w-field:last-child { border-bottom: none; }
+  .w-label { color: #8a6aaa; font-size: 0.7rem; font-family: 'Cinzel', serif; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .w-input { width: 100%; background: rgba(122,58,170,0.05); border: 1px solid rgba(122,58,170,0.3); border-left: 2px solid var(--wendigo); color: var(--text); font-family: 'Crimson Text', serif; font-size: 0.95rem; font-style: italic; padding: 0.3rem 0.6rem; transition: border-color 0.2s, background 0.2s; }
+  .w-input:focus { outline: none; border-color: var(--wendigo); background: rgba(122,58,170,0.1); }
+  .w-input::placeholder { color: #5a4a6a; }
+
+  .stage-row { display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
+  .stage-btn { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.1em; padding: 0.3rem 0.7rem; border: 1px solid rgba(122,58,170,0.3); background: transparent; color: #6a4a8a; cursor: pointer; text-transform: uppercase; transition: all 0.15s; }
+  .stage-btn:hover { border-color: var(--wendigo); color: #b07ae0; }
+  .stage-btn.active { border-color: var(--wendigo); color: #b07ae0; background: var(--wendigo-dim); }
+
+  .memory-row { display: flex; gap: 0.5rem; margin-top: 0.3rem; }
+  .mem-btn { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.1em; padding: 0.3rem 0.7rem; border: 1px solid rgba(122,58,170,0.3); background: transparent; color: #6a4a8a; cursor: pointer; text-transform: uppercase; transition: all 0.15s; flex: 1; text-align: center; }
+  .mem-btn:hover { border-color: var(--wendigo); color: #b07ae0; }
+  .mem-btn.active { border-color: var(--wendigo); color: #b07ae0; background: var(--wendigo-dim); }
+
+  .wendigo-note { font-style: italic; font-size: 0.85rem; color: #6a4a8a; text-align: center; padding: 1.5rem; border: 1px solid rgba(122,58,170,0.2); margin-bottom: 1.5rem; background: rgba(122,58,170,0.04); }
+
+  .section-label { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.4em; color: var(--muted); text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .section-label.w-label-section { color: #6a4a8a; }
+  .section-label.w-label-section::after { background: rgba(122,58,170,0.3); }
+
+  .reset-btn { font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.15em; padding: 0.3rem 0.8rem; border: 1px solid #3a2a2a; background: transparent; color: #6a4a4a; cursor: pointer; text-transform: uppercase; transition: all 0.2s; margin-top: 0.5rem; }
+  .reset-btn:hover { border-color: #aa4a4a; color: #aa4a4a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>UNTIL DAWN</h1>
+  <div class="subtitle">Character Dossiers — Blackwood Mountain</div>
+  <div class="save-indicator" id="save-indicator">All changes saved locally</div>
+</header>
+
+<div class="tabs" id="tabs"></div>
+<div id="sheets"></div>
+
+<script>
+const REL_OPTIONS   = ["Friendly","Close","Romantic","Tense","Strained","Rivals","Deceased","Unknown","Estranged","Hostile"];
+const INV_STATES    = ["found","not-found","lost"];
+const INV_LABELS    = { found:"Found", "not-found":"Not Found", lost:"Lost" };
+const STATUS_CYCLE  = ["alive","deceased","unknown","wendigo"];
+const STATUS_LABELS = { alive:"Alive", deceased:"Deceased", unknown:"Unknown", wendigo:"Wendigo" };
+const STAGES        = ["Freshly Turned","Partial","Full","Ancient"];
+const MEMORIES      = ["Yes","Faint","None"];
+const STORAGE_KEY   = "until-dawn-sheets-v1";
+
+const characters = [
+  {
+    id:"sam", name:"Sam", full:"Samantha Giddings", role:"The Moral Compass",
+    stats:[{name:"Bravery",tier:"high"},{name:"Agility",tier:"high"},{name:"Wit",tier:"high"},{name:"Composure",tier:"high"},{name:"Strength",tier:"med"},{name:"Empathy",tier:"high"}],
+    sanity:10,
+    traits:["Principled and steady under pressure","Genuinely cares about everyone's safety","Slow to panic, quick to act","Avoids unnecessary conflict"],
+    relationships:[{name:"Mike",status:"friendly"},{name:"Josh",status:"close"},{name:"Hannah",status:"close"},{name:"Beth",status:"close"},{name:"Chris",status:"friendly"},{name:"Ashley",status:"friendly"},{name:"Emily",status:"strained"},{name:"Jessica",status:"friendly"}],
+    inventory:[{name:"Warm lodge clothing",state:"found",fixed:true},{name:"Flashlight",state:"found",fixed:true}],
+    choices:[{label:"Prank involvement",val:"Absent — did not participate",fixed:true},{label:"Loyalty to Josh",val:"",ph:"Pending..."},{label:"Survival priority",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"mike", name:"Mike", full:"Michael Munroe", role:"The Hero",
+    stats:[{name:"Bravery",tier:"high"},{name:"Agility",tier:"high"},{name:"Wit",tier:"med"},{name:"Composure",tier:"med"},{name:"Strength",tier:"high"},{name:"Empathy",tier:"low"}],
+    sanity:10,
+    traits:["Natural leader, sometimes reckless","Acts first, questions later","Genuinely brave under fire","Struggles with guilt over the prank"],
+    relationships:[{name:"Jessica",status:"romantic"},{name:"Sam",status:"friendly"},{name:"Josh",status:"friendly"},{name:"Chris",status:"friendly"},{name:"Ashley",status:"friendly"},{name:"Emily",status:"strained"},{name:"Matt",status:"strained"}],
+    inventory:[{name:"Heavy jacket",state:"found",fixed:true},{name:"Flashlight",state:"found",fixed:true},{name:"Flare gun",state:"not-found",fixed:false}],
+    choices:[{label:"Prank involvement",val:"Participated",fixed:true},{label:"Jessica rescue attempt",val:"",ph:"Pending..."},{label:"Sanatorium decisions",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"chris", name:"Chris", full:"Christopher Hartley", role:"The Joker",
+    stats:[{name:"Bravery",tier:"med"},{name:"Agility",tier:"low"},{name:"Wit",tier:"high"},{name:"Composure",tier:"med"},{name:"Strength",tier:"low"},{name:"Empathy",tier:"med"}],
+    sanity:9,
+    traits:["Uses humor as a defense mechanism","Deeply loyal to Ashley","Smarter than he lets on","Cowardly instincts, brave heart"],
+    relationships:[{name:"Ashley",status:"romantic"},{name:"Josh",status:"close"},{name:"Sam",status:"friendly"},{name:"Mike",status:"friendly"},{name:"Emily",status:"strained"}],
+    inventory:[{name:"Parka",state:"found",fixed:true},{name:"Flashlight",state:"found",fixed:true},{name:"Baseball bat",state:"not-found",fixed:false}],
+    choices:[{label:"Prank involvement",val:"Participated",fixed:true},{label:"Shoot Ashley or self",val:"",ph:"Pending..."},{label:"Ashley — run or stay",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"ashley", name:"Ashley", full:"Ashley Brown", role:"The Bookworm",
+    stats:[{name:"Bravery",tier:"low"},{name:"Agility",tier:"med"},{name:"Wit",tier:"high"},{name:"Composure",tier:"low"},{name:"Strength",tier:"low"},{name:"Empathy",tier:"med"}],
+    sanity:8,
+    traits:["Highly intelligent and perceptive","Anxiety-prone, panics under pressure","Genuinely kind but can be selfish in extremis","Strong feelings for Chris"],
+    relationships:[{name:"Chris",status:"romantic"},{name:"Sam",status:"friendly"},{name:"Josh",status:"friendly"},{name:"Emily",status:"tense"}],
+    inventory:[{name:"Winter coat",state:"found",fixed:true},{name:"Flashlight",state:"found",fixed:true},{name:"Candle holder",state:"not-found",fixed:false}],
+    choices:[{label:"Prank involvement",val:"Participated",fixed:true},{label:"Ouija board",val:"",ph:"Pending..."},{label:"Trap door decision",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"emily", name:"Emily", full:"Emily Davis", role:"The Type-A",
+    stats:[{name:"Bravery",tier:"med"},{name:"Agility",tier:"high"},{name:"Wit",tier:"high"},{name:"Composure",tier:"med"},{name:"Strength",tier:"low"},{name:"Empathy",tier:"low"}],
+    sanity:9,
+    traits:["Controlling and sharp-tongued","Highly resourceful when the chips are down","More capable than anyone gives her credit for","Uses arrogance as armor"],
+    relationships:[{name:"Matt",status:"romantic"},{name:"Mike",status:"strained"},{name:"Jessica",status:"tense"},{name:"Ashley",status:"tense"},{name:"Sam",status:"strained"}],
+    inventory:[{name:"Designer coat",state:"found",fixed:true},{name:"Flashlight",state:"found",fixed:true},{name:"Flare",state:"not-found",fixed:false}],
+    choices:[{label:"Prank involvement",val:"Participated",fixed:true},{label:"Radio tower",val:"",ph:"Pending..."},{label:"Wendigo bite revealed",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"matt", name:"Matt", full:"Matthew Taylor", role:"The Athlete",
+    stats:[{name:"Bravery",tier:"high"},{name:"Agility",tier:"high"},{name:"Wit",tier:"med"},{name:"Composure",tier:"med"},{name:"Strength",tier:"high"},{name:"Empathy",tier:"high"}],
+    sanity:10,
+    traits:["Genuinely good-natured and loyal","Avoids conflict but will stand his ground","Physically capable, emotionally steady","Underestimated by everyone"],
+    relationships:[{name:"Emily",status:"romantic"},{name:"Mike",status:"strained"},{name:"Sam",status:"friendly"},{name:"Chris",status:"friendly"}],
+    inventory:[{name:"Varsity jacket",state:"found",fixed:true},{name:"Flashlight",state:"found",fixed:true},{name:"Axe",state:"not-found",fixed:false}],
+    choices:[{label:"Prank involvement",val:"Not involved",fixed:true},{label:"Help Emily or flee",val:"",ph:"Pending..."},{label:"Tower jump",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"jessica", name:"Jessica", full:"Jessica Riley", role:"The Flirt",
+    stats:[{name:"Bravery",tier:"low"},{name:"Agility",tier:"med"},{name:"Wit",tier:"med"},{name:"Composure",tier:"low"},{name:"Strength",tier:"low"},{name:"Empathy",tier:"med"}],
+    sanity:8,
+    traits:["Puts up a confident front, easily frightened underneath","Affectionate and devoted to Mike","Socially sharp but not unkind at heart","Rivalry with Emily is mostly performance"],
+    relationships:[{name:"Mike",status:"romantic"},{name:"Emily",status:"tense"},{name:"Sam",status:"friendly"},{name:"Ashley",status:"friendly"}],
+    inventory:[{name:"Winter outfit",state:"found",fixed:true},{name:"Flashlight",state:"not-found",fixed:false}],
+    choices:[{label:"Prank involvement",val:"Participated",fixed:true},{label:"Cabin alone with Mike",val:"",ph:"Pending..."},{label:"Survival outcome",val:"",ph:"Pending..."}]
+  },
+  {
+    id:"josh", name:"Josh", full:"Joshua Washington", role:"The Wildcard",
+    stats:[{name:"Bravery",tier:"med"},{name:"Agility",tier:"med"},{name:"Wit",tier:"high"},{name:"Composure",tier:"low"},{name:"Strength",tier:"med"},{name:"Empathy",tier:"med"}],
+    sanity:5,
+    traits:["Deeply traumatized by the loss of his sisters","Hides pain behind humor and performance","Brilliant but unraveling","His grief is real even when his actions aren't"],
+    relationships:[{name:"Sam",status:"close"},{name:"Chris",status:"close"},{name:"Hannah",status:"close"},{name:"Beth",status:"close"},{name:"Mike",status:"friendly"},{name:"Ashley",status:"friendly"}],
+    inventory:[{name:"Lodge access",state:"found",fixed:true},{name:"Camera equipment",state:"found",fixed:true},{name:"Recording devices",state:"found",fixed:true}],
+    choices:[{label:"The prank — organizer",val:"Masterminded it",fixed:true},{label:"True motive revealed",val:"",ph:"Pending..."},{label:"Totem / journal outcome",val:"",ph:"Pending..."}]
+  }
+];
+
+// ── Storage helpers ──────────────────────────────────────────────
+function buildDefaultState() {
+  const s = {};
+  characters.forEach(c => {
+    s[c.id] = {
+      status: "alive",
+      sanity: c.sanity,
+      hunt: 5,
+      stage: 0,
+      memory: 0,
+      location: "",
+      prey1: "", prey2: "", preyNotes: "",
+      relationships: c.relationships.map(r => r.status),
+      inventory: c.inventory.map(i => i.state),
+      choices: c.choices.map(ch => ch.val),
+    };
+  });
+  return s;
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return buildDefaultState();
+}
+
+let saveTimer = null;
+function saveState() {
+  const ind = document.getElementById('save-indicator');
+  ind.textContent = 'Saving…';
+  ind.className = 'save-indicator saving';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      ind.textContent = 'All changes saved locally';
+      ind.className = 'save-indicator saved';
+    } catch(e) {
+      ind.textContent = 'Could not save — storage unavailable';
+      ind.className = 'save-indicator';
+    }
+  }, 400);
+}
+
+const appState = loadState();
+
+// ── Interaction handlers ─────────────────────────────────────────
+function cycleStatus(id) {
+  const s = appState[id];
+  const cur = STATUS_CYCLE.indexOf(s.status);
+  s.status = STATUS_CYCLE[(cur + 1) % STATUS_CYCLE.length];
+  applyStatus(id);
+  saveState();
+}
+
+function applyStatus(id) {
+  const s = appState[id];
+  const badge = document.getElementById('badge-' + id);
+  badge.textContent = STATUS_LABELS[s.status];
+  badge.className = 'status-badge' + (s.status !== 'alive' ? ' ' + s.status : '');
+  const sheet = document.getElementById('sheet-' + id);
+  const tab   = document.getElementById('tab-'   + id);
+  const role  = document.getElementById('role-'  + id);
+  const char  = characters.find(c => c.id === id);
+  if (s.status === 'wendigo') {
+    sheet.classList.add('wendigo-mode');
+    tab.classList.add('is-wendigo');
+    role.textContent = 'Wendigo';
+    role.className = 'char-role wendigo-role';
+  } else {
+    sheet.classList.remove('wendigo-mode');
+    tab.classList.remove('is-wendigo');
+    role.textContent = char.role;
+    role.className = 'char-role';
+  }
+}
+
+function togglePip(id, idx, isHunt) {
+  const s = appState[id];
+  const key = isHunt ? 'hunt' : 'sanity';
+  s[key] = (idx === s[key] - 1) ? s[key] - 1 : idx + 1;
+  const trackId = (isHunt ? 'hunt-' : 'sanity-') + id;
+  document.querySelectorAll('#' + trackId + ' .pip').forEach((p, i) => {
+    p.classList.toggle('filled', i < s[key]);
+    if (isHunt) p.classList.add('hunt');
+  });
+  saveState();
+}
+
+function cycleInv(id, idx) {
+  const s = appState[id];
+  const cur  = INV_STATES.indexOf(s.inventory[idx]);
+  const next = INV_STATES[(cur + 1) % INV_STATES.length];
+  s.inventory[idx] = next;
+  applyInvItem(id, idx);
+  saveState();
+}
+
+function applyInvItem(id, idx) {
+  const state = appState[id].inventory[idx];
+  const btn  = document.getElementById('invbtn-'  + id + '-' + idx);
+  const dot  = document.getElementById('invdot-'  + id + '-' + idx);
+  const name = document.getElementById('invname-' + id + '-' + idx);
+  if (btn) { btn.dataset.state = state; btn.textContent = INV_LABELS[state]; btn.className = 'inv-toggle ' + state; }
+  if (dot)  dot.className  = 'inv-dot '  + (state !== 'found' ? state : '');
+  if (name) name.className = 'inv-name ' + (state !== 'found' ? state : '');
+}
+
+function updateRel(id, idx, val) {
+  const key = val.toLowerCase().replace(' ', '-');
+  appState[id].relationships[idx] = key;
+  document.getElementById('rel-' + id + '-' + idx).className = 'rel-select ' + key;
+  saveState();
+}
+
+function updateChoice(id, idx, val) {
+  appState[id].choices[idx] = val;
+  saveState();
+}
+
+function setStage(id, idx) {
+  appState[id].stage = idx;
+  document.querySelectorAll('#stages-' + id + ' .stage-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  saveState();
+}
+
+function setMemory(id, idx) {
+  appState[id].memory = idx;
+  document.querySelectorAll('#memory-' + id + ' .mem-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  saveState();
+}
+
+function updateWField(id, field, val) {
+  appState[id][field] = val;
+  saveState();
+}
+
+function resetCharacter(id) {
+  if (!confirm('Reset ' + id.charAt(0).toUpperCase() + id.slice(1) + ' to defaults? This cannot be undone.')) return;
+  const def = buildDefaultState();
+  Object.assign(appState[id], def[id]);
+  // Re-render by rebuilding the sheet content
+  location.reload();
+}
+
+// ── Build UI ─────────────────────────────────────────────────────
+const tabsEl   = document.getElementById('tabs');
+const sheetsEl = document.getElementById('sheets');
+
+characters.forEach((c, ci) => {
+  const s = appState[c.id];
+
+  const btn = document.createElement('button');
+  btn.id = 'tab-' + c.id;
+  btn.className = 'tab-btn' + (ci === 0 ? ' active' : '') + (s.status === 'wendigo' ? ' is-wendigo' : '');
+  btn.textContent = c.name.toUpperCase();
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.sheet').forEach(sh => sh.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sheet-' + c.id).classList.add('active');
+  };
+  tabsEl.appendChild(btn);
+
+  const tierLabel = t => t === 'med' ? 'Medium' : t.charAt(0).toUpperCase() + t.slice(1);
+  const statsHTML = c.stats.map(st =>
+    `<div class="stat-row"><span class="stat-name">${st.name}</span><span class="tier ${st.tier}">${tierLabel(st.tier)}</span></div>`
+  ).join('');
+  const traitsHTML = c.traits.map(t => `<li>${t}</li>`).join('');
+
+  const relHTML = c.relationships.map((r, ri) => {
+    const saved = s.relationships[ri] || r.status;
+    const opts = REL_OPTIONS.map(o => `<option value="${o}"${o.toLowerCase()===saved?' selected':''}>${o}</option>`).join('');
+    return `<div class="rel-row"><span class="rel-name">${r.name}</span>
+      <select id="rel-${c.id}-${ri}" class="rel-select ${saved}" onchange="updateRel('${c.id}',${ri},this.value)">${opts}</select></div>`;
+  }).join('');
+
+  const invHTML = c.inventory.map((item, ii) => {
+    const savedState = s.inventory[ii] || item.state;
+    const right = item.fixed
+      ? `<span class="inv-fixed">Starting</span>`
+      : `<button id="invbtn-${c.id}-${ii}" class="inv-toggle ${savedState}" data-state="${savedState}" onclick="cycleInv('${c.id}',${ii})">${INV_LABELS[savedState]}</button>`;
+    return `<div class="inv-item">
+      <div class="inv-left">
+        <div id="invdot-${c.id}-${ii}" class="inv-dot ${savedState!=='found'?savedState:''}"></div>
+        <span id="invname-${c.id}-${ii}" class="inv-name ${savedState!=='found'?savedState:''}">${item.name}</span>
+      </div>${right}</div>`;
+  }).join('');
+
+  const choicesHTML = c.choices.map((ch, chi) => {
+    const savedVal = s.choices[chi] !== undefined ? s.choices[chi] : ch.val;
+    if (ch.fixed) {
+      return `<div class="choice-row"><div class="choice-label">${ch.label}</div>
+        <input class="choice-input" type="text" value="${savedVal}" readonly></div>`;
+    }
+    return `<div class="choice-row"><div class="choice-label">${ch.label}</div>
+      <input class="choice-input" type="text" placeholder="${ch.ph||'Enter outcome...'}"
+        value="${savedVal}"
+        oninput="updateChoice('${c.id}',${chi},this.value)"></div>`;
+  }).join('');
+
+  let sanityPips = '';
+  for (let i = 0; i < 10; i++) sanityPips += `<div class="pip${i < s.sanity ? ' filled' : ''}" onclick="togglePip('${c.id}',${i},false)"></div>`;
+  let huntPips = '';
+  for (let i = 0; i < 10; i++) huntPips += `<div class="pip hunt-pip${i < s.hunt ? ' filled hunt' : ''}" onclick="togglePip('${c.id}',${i},true)"></div>`;
+
+  const stageButtons = STAGES.map((st, si) => `<button class="stage-btn${si===s.stage?' active':''}" onclick="setStage('${c.id}',${si})">${st}</button>`).join('');
+  const memButtons   = MEMORIES.map((m, mi) => `<button class="mem-btn${mi===s.memory?' active':''}" onclick="setMemory('${c.id}',${mi})">${m}</button>`).join('');
+
+  const isWendigo = s.status === 'wendigo';
+
+  const div = document.createElement('div');
+  div.className = 'sheet' + (ci === 0 ? ' active' : '') + (isWendigo ? ' wendigo-mode' : '');
+  div.id = 'sheet-' + c.id;
+  div.innerHTML = `
+    <div class="sheet-header">
+      <div>
+        <div class="char-name">${c.name}</div>
+        <div id="role-${c.id}" class="char-role${isWendigo?' wendigo-role':''}">${isWendigo ? 'Wendigo' : c.role}</div>
+      </div>
+      <div id="badge-${c.id}" class="status-badge${s.status!=='alive'?' '+s.status:''}" onclick="cycleStatus('${c.id}')" title="Click to change status">${STATUS_LABELS[s.status]}</div>
+    </div>
+
+    <div class="human-view">
+      <div class="section-label">Core Stats & Sanity</div>
+      <div class="grid-2">
+        <div class="card"><div class="card-title">Statistics</div>${statsHTML}</div>
+        <div class="card">
+          <div class="card-title">Sanity Meter</div>
+          <div class="pip-track" id="sanity-${c.id}">${sanityPips}</div>
+          <div class="pip-label"><span>Broken</span><span>Stable</span></div>
+          <div style="margin-top:1rem;font-size:0.8rem;color:var(--muted);font-style:italic;">Click pips to track sanity loss.</div>
+        </div>
+      </div>
+      <div class="section-label">Personality & Inventory</div>
+      <div class="grid-2">
+        <div class="card"><div class="card-title">Traits</div><ul class="trait-list">${traitsHTML}</ul></div>
+        <div class="card"><div class="card-title">Inventory</div>${invHTML}</div>
+      </div>
+      <div class="section-label">Relationships</div>
+      <div class="card" style="margin-bottom:1.5rem;"><div class="card-title">Relationship Status — use dropdown to update</div>${relHTML}</div>
+      <div class="section-label">Butterfly Effect</div>
+      <div class="card" style="margin-bottom:1.5rem;"><div class="card-title">Key Choices — type to record outcomes</div>${choicesHTML}</div>
+      <div style="text-align:right;"><button class="reset-btn" onclick="resetCharacter('${c.id}')">Reset to defaults</button></div>
+    </div>
+
+    <div class="wendigo-view">
+      <div class="wendigo-note">Human identity subsumed. Wendigo protocols active.</div>
+      <div class="section-label w-label-section">Hunt Drive & Transformation</div>
+      <div class="grid-2">
+        <div class="card wendigo-card">
+          <div class="card-title">Hunt Drive</div>
+          <div class="pip-track" id="hunt-${c.id}">${huntPips}</div>
+          <div class="pip-label"><span>Feral</span><span>Controlled</span></div>
+          <div style="margin-top:1rem;font-size:0.8rem;color:#5a4a6a;font-style:italic;">Click pips to adjust instinct level.</div>
+        </div>
+        <div class="card wendigo-card">
+          <div class="card-title">Transformation Stage</div>
+          <div class="stage-row" id="stages-${c.id}">${stageButtons}</div>
+        </div>
+      </div>
+      <div class="section-label w-label-section">Retained Memory & Location</div>
+      <div class="grid-2">
+        <div class="card wendigo-card">
+          <div class="card-title">Retained Memories</div>
+          <div class="memory-row" id="memory-${c.id}">${memButtons}</div>
+          <div style="margin-top:0.8rem;font-size:0.8rem;color:#5a4a6a;font-style:italic;">Does the human persist beneath the creature?</div>
+        </div>
+        <div class="card wendigo-card">
+          <div class="card-title">Last Known Location</div>
+          <input class="w-input" type="text" placeholder="e.g. Mine tunnels, forest perimeter..."
+            value="${s.location||''}"
+            oninput="updateWField('${c.id}','location',this.value)">
+        </div>
+      </div>
+      <div class="section-label w-label-section">Prey Tracked</div>
+      <div class="card wendigo-card">
+        <div class="card-title">Active Targets</div>
+        <div class="w-field"><div class="w-label">Primary Prey</div>
+          <input class="w-input" type="text" placeholder="Name / last seen location..."
+            value="${s.prey1||''}" oninput="updateWField('${c.id}','prey1',this.value)"></div>
+        <div class="w-field"><div class="w-label">Secondary Prey</div>
+          <input class="w-input" type="text" placeholder="Name / last seen location..."
+            value="${s.prey2||''}" oninput="updateWField('${c.id}','prey2',this.value)"></div>
+        <div class="w-field"><div class="w-label">Notes</div>
+          <input class="w-input" type="text" placeholder="Behavioral patterns, triggers..."
+            value="${s.preyNotes||''}" oninput="updateWField('${c.id}','preyNotes',this.value)"></div>
+      </div>
+      <div style="text-align:right;margin-top:1rem;"><button class="reset-btn" onclick="resetCharacter('${c.id}')">Reset to defaults</button></div>
+    </div>
+  `;
+  sheetsEl.appendChild(div);
+});
+</script>
+</body>
+</html>
